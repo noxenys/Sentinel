@@ -1,14 +1,12 @@
 /**
- * Sentinel v3.8 - High-Frequency Dynamic Edition
- * Powered by Noxen YS & Manus AI
+ * Sentinel v3.6 - The In-place Edition
  * 
  * Features: 
- * - High-Frequency Dynamic Monitoring (3-5s interval)
  * - In-place Editing (Directly edit in the list)
  * - Multi-platform Alerts (TG, Discord, Webhook)
  * - Alert Throttling (1h cooling)
  * - Uptime History Bar (50 records)
- * - Real-time Latency Tracking with Visual Feedback
+ * - Real-time Latency Tracking
  * - Smart Categorization & Accordion UI
  * - Modern Custom Modals
  * - Bilingual UI & Local Clock
@@ -101,7 +99,6 @@ const HTML_PAGE = `
     .status-row { display: flex; align-items: center; gap: 12px; }
     .status-badge { font-size: 0.65rem; padding: 3px 10px; border-radius: 6px; font-weight: 700; text-transform: uppercase; }
     .status-online { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
-    .status-online { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
     .status-offline { background: rgba(239, 68, 68, 0.15); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); }
     .latency { font-size: 0.75rem; color: #38bdf8; font-family: monospace; transition: all 0.3s ease; font-weight: 600; }
     .latency-update { color: #fff; text-shadow: 0 0 8px var(--primary); }
@@ -167,7 +164,6 @@ const HTML_PAGE = `
     <header>
       <h1>Sentinel</h1>
       <p class="subtitle">智能在线哨兵 · 生产级监控</p>
-      <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px; opacity: 0.6;">Powered by Noxen YS & Manus AI</p>
       <div id="liveClock" style="margin-top: 15px; font-family: monospace; color: var(--primary); font-weight: 600; font-size: 1.1rem; letter-spacing: 1px;"></div>
     </header>
 
@@ -328,6 +324,9 @@ const HTML_PAGE = `
     }
 
     async function checkAll() {
+      // 全局状态存储，用于记录每个监控项的当前状态
+      window.itemStatuses = {};
+      
       const checkOne = async (item) => {
         let url = item;
         if (item.includes(':http')) url = item.substring(item.indexOf(':http') + 1);
@@ -341,6 +340,7 @@ const HTML_PAGE = `
             const res = await fetch('/api/check?url=' + encodeURIComponent(url));
             const data = await res.json();
             const latency = Date.now() - start;
+            
             if (badge) {
               if (data.ok) {
                 badge.innerText = 'ONLINE ' + data.status;
@@ -348,14 +348,24 @@ const HTML_PAGE = `
                 latEl.innerText = latency + 'ms';
                 latEl.classList.add('latency-update');
                 setTimeout(() => { latEl.classList.remove('latency-update'); }, 500);
+                
+                // 记录状态为在线
+                window.itemStatuses[itemId] = 'online';
               } else {
                 badge.innerText = 'OFFLINE ' + (data.status || 'ERR');
                 badge.className = 'status-badge status-offline';
+                
+                // 记录状态为异常
+                window.itemStatuses[itemId] = 'offline';
               }
             }
-          } catch (e) { }
-          // 重新计算总数，避免累加错误
-          updateStats();
+          } catch (e) { 
+            // 记录状态为异常
+            window.itemStatuses[itemId] = 'offline';
+          }
+          
+          // 更新统计显示（基于所有监控项的状态）
+          updateGlobalStats();
         };
 
         await runCheck();
@@ -366,12 +376,94 @@ const HTML_PAGE = `
       allUrls.forEach(item => checkOne(item));
     }
 
-    function updateStats() {
-      const online = document.querySelectorAll('.status-online').length;
-      const offline = document.querySelectorAll('.status-offline').length;
-      document.getElementById('onlineCount').innerText = online;
-      document.getElementById('offlineCount').innerText = offline;
+    function updateGlobalStats() {
+      // 计算所有监控项的在线和异常数量
+      let online = 0, offline = 0;
+      
+      allUrls.forEach(item => {
+        const itemId = getSafeId(item);
+        const status = window.itemStatuses ? window.itemStatuses[itemId] : null;
+        if (status === 'online') online++;
+        else if (status === 'offline') offline++;
+      });
+      
+      // 添加灵动动画效果
+      animateNumber('onlineCount', online);
+      animateNumber('offlineCount', offline);
+      
+      // 设置定期轻微跳动效果（即使数字不变也跳动）
+      if (!window.continuousAnimation) {
+        window.continuousAnimation = setInterval(() => {
+          // 随机触发轻微跳动（约每3-8秒一次）
+          if (Math.random() < 0.3) {
+            const onlineEl = document.getElementById('onlineCount');
+            const offlineEl = document.getElementById('offlineCount');
+            
+            if (onlineEl) {
+              onlineEl.style.transition = 'all 0.2s ease';
+              onlineEl.style.transform = 'translateY(-1px) scale(1.02)';
+              setTimeout(() => {
+                onlineEl.style.transform = 'translateY(0) scale(1)';
+              }, 200);
+            }
+            
+            if (offlineEl) {
+              offlineEl.style.transition = 'all 0.2s ease';
+              offlineEl.style.transform = 'translateY(-1px) scale(1.02)';
+              setTimeout(() => {
+                offlineEl.style.transform = 'translateY(0) scale(1)';
+              }, 200);
+            }
+          }
+        }, 3000);
+      }
     }
+    
+    function animateNumber(elementId, targetValue) {
+      const element = document.getElementById(elementId);
+      const currentValue = parseInt(element.innerText) || 0;
+      
+      // 即使数字没有变化，也添加轻微的跳动效果
+      const shouldUpdateNumber = currentValue !== targetValue;
+      
+      // 添加优雅的跳动动画
+      element.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+      
+      // 第一阶段：轻微上浮
+      element.style.transform = 'translateY(-3px) scale(1.08)';
+      element.style.textShadow = '0 2px 8px rgba(255, 255, 255, 0.3)';
+      
+      setTimeout(() => {
+        // 第二阶段：更新数字并轻微下沉
+        if (shouldUpdateNumber) {
+          element.innerText = targetValue;
+        }
+        element.style.transform = 'translateY(1px) scale(0.98)';
+        
+        // 添加颜色闪烁效果
+        if (elementId === 'onlineCount') {
+          element.style.color = '#22c55e';
+        } else if (elementId === 'offlineCount') {
+          element.style.color = '#f87171';
+        }
+        
+        setTimeout(() => {
+          // 第三阶段：恢复原状
+          element.style.transform = 'translateY(0) scale(1)';
+          element.style.textShadow = 'none';
+          
+          // 恢复原色
+          if (elementId === 'onlineCount') {
+            element.style.color = 'var(--success)';
+          } else if (elementId === 'offlineCount') {
+            element.style.color = 'var(--error)';
+          }
+        }, 200);
+      }, 200);
+    }
+    
+    // 全局状态存储
+    window.itemStatuses = {};
 
     function editUrl(raw) {
       const itemId = getSafeId(raw);
@@ -507,7 +599,7 @@ const HTML_PAGE = `
   </script>
 </body>
 </html>
-\`;
+`;
 
 // --- Backend Logic ---
 
@@ -555,11 +647,12 @@ async function handleRequest(request) {
   if (method === 'GET' && url.pathname === '/api/check') {
     const target = url.searchParams.get('url');
     try {
+      // 增加超时控制和更宽松的协议处理，确保带端口的 URL 也能正常检测
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       const res = await fetch(target, { 
         method: 'GET', 
-        headers: { 'User-Agent': 'Sentinel/3.8' }, 
+        headers: { 'User-Agent': 'Sentinel/3.7' }, 
         redirect: 'follow',
         signal: controller.signal
       });
@@ -606,7 +699,7 @@ async function handleScheduled() {
     let url = raw;
     if (raw.includes(':http')) url = raw.substring(raw.indexOf(':http') + 1);
     try {
-      const res = await fetch(url, { method: 'GET', headers: { 'User-Agent': 'Sentinel-Monitor/3.8' } });
+      const res = await fetch(url, { method: 'GET', headers: { 'User-Agent': 'Sentinel-Monitor/3.6' } });
       const ok = res.status < 400;
       results.push({ raw, url, ok, status: res.status });
       if (!history[raw]) history[raw] = [];
