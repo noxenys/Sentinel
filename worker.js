@@ -1,15 +1,7 @@
 /**
- * Sentinel v3.6 - The In-place Edition
- * 
- * Features: 
- * - In-place Editing (Directly edit in the list)
- * - Multi-platform Alerts (TG, Discord, Webhook)
- * - Alert Throttling (1h cooling)
- * - Uptime History Bar (50 records)
- * - Real-time Latency Tracking
- * - Smart Categorization & Accordion UI
- * - Modern Custom Modals
- * - Bilingual UI & Local Clock
+ * Sentinel v3.7 - Final Layout Fix
+ * * Fixed: Toast position centered
+ * * Fixed: Refresh button layout (Flexbox)
  */
 
 const DEFAULT_URLS = []; 
@@ -29,19 +21,25 @@ const HTML_PAGE = `
       --primary: #6366f1;
       --primary-hover: #4f46e5;
       --bg: #0f172a;
-      --card-bg: rgba(30, 41, 59, 0.7);
+      /* 将卡片背景透明度从 0.7 降到 0.4，并稍微调亮色相 */
+      --card-bg: rgba(30, 41, 59, 0.4);
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --success: #10b981;
       --error: #ef4444;
-      --border: rgba(255, 255, 255, 0.1);
+      --border: rgba(255, 255, 255, 0.15); /* 稍微提亮边框，增加轮廓感 */
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Inter', sans-serif;
-      background-color: var(--bg);
-      background-image: radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent),
-                        radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.05), transparent);
+      /* 调亮一点底色 */
+      background-color: #0f172a;
+      /* 核心：增加顶部中间的紫色光晕，以及左右的辅助光，模拟“极光”效果 */
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.25), transparent 50%), /* 顶部主光 */ 
+        radial-gradient(circle at 100% 0%, rgba(168, 85, 247, 0.15), transparent 40%), /* 右上角紫光 */ 
+        radial-gradient(circle at 0% 100%, rgba(56, 189, 248, 0.1), transparent 40%); /* 左下角蓝光 */
+      background-attachment: fixed; /* 让背景固定，不随滚动条滚动 */
       color: var(--text-main);
       line-height: 1.6;
       padding: 40px 20px;
@@ -52,79 +50,461 @@ const HTML_PAGE = `
     h1 { font-size: 2.8rem; font-weight: 800; letter-spacing: -0.05em; margin-bottom: 8px; background: linear-gradient(to bottom right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .subtitle { color: var(--text-muted); font-size: 1rem; font-weight: 500; }
     
-    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+    /* --- 仪表盘核心布局修正 --- */
+    .dashboard-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 30px;
+      align-items: stretch; /* 让高度对齐 */
+    }
+    
+    /* 左侧：3个数据卡片网格 */
+    header {
+      position: relative;
+      text-align: center;
+      margin-bottom: 40px;
+      padding-top: 10px;
+    }
+    .logout-btn-top {
+      position: absolute;
+      top: 15px;
+      right: 0;
+      background: transparent;
+      border: none;
+      color: var(--error);
+      cursor: pointer;
+      opacity: 0.7;
+      transition: all 0.2s;
+      padding: 8px;
+    }
+    .logout-btn-top:hover { opacity: 1; transform: scale(1.1); }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr); /* 严格的3列 */
+      gap: 20px;
+      flex: 1; /* 占据剩余所有空间 */
+    }
+
+    /* 右侧：独立的刷新按钮卡片 */
+    .refresh-btn-card {
+      width: 90px;
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: var(--text-muted);
+      backdrop-filter: blur(16px);
+      text-align: center;
+      user-select: none;
+    }
+    .refresh-btn-card:hover {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: var(--primary);
+      color: var(--primary);
+      transform: translateY(-2px);
+    }
+    .refresh-btn-card:active { transform: translateY(0); }
+    .refresh-icon { font-size: 1.6rem; margin-bottom: 4px; line-height: 1; }
+    .refresh-text { font-size: 0.75rem; font-weight: 600; }
+
+    /* 数据卡片样式 */
     .stat-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 20px;
       padding: 24px;
       text-align: center;
-      backdrop-filter: blur(16px);
+      backdrop-filter: blur(20px); /* 加强毛玻璃 */
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); /* 增加投影 */
+      transition: all 0.3s ease;
+      /* 移除点击刷新功能，防止误触 */
     }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
     .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; }
     .stat-value { font-size: 2rem; font-weight: 800; }
 
+    /* 手机端适配：垂直排列 */
+    @media (max-width: 768px) {
+      .dashboard-row { flex-direction: column; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); } 
+      .refresh-btn-card { 
+        width: 100%; 
+        height: 50px; 
+        flex-direction: row; 
+        gap: 10px;
+      }
+      .refresh-icon { margin-bottom: 0; font-size: 1.2rem; }
+    }
+    /* ------------------------ */
+
     .group-container { margin-bottom: 24px; }
+    
+    /* 分类标题：改为透明背景 + 底部线条 */
     .group-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 14px 24px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border);
-      border-radius: 16px;
+      padding: 12px 4px;       /* 减小内边距，紧凑一点 */
+      background: transparent; /* 核心：去掉深色背景 */
+      border: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* 只留一条淡淡的底线 */
+      border-radius: 0;        /* 去掉圆角 */
       cursor: pointer;
       user-select: none;
+      margin-bottom: 12px;     /* 稍微拉开和下面卡片的距离 */
+      transition: all 0.2s;
     }
-    .group-header:hover { background: rgba(255, 255, 255, 0.06); border-color: var(--primary); }
-    .group-title { font-weight: 700; font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 12px; }
+    .group-header:hover { 
+      padding-left: 10px;      /* 悬停时轻微右移，增加交互感 */
+      border-bottom-color: var(--primary); /* 线条变色 */
+    }
+    
+    /* 标题文字 */
+    .group-title { 
+      font-size: 1.1rem;       /* 字体稍微加大一点 */
+      color: var(--text-main); 
+      font-weight: 700; 
+      display: flex; 
+      align-items: center; 
+      gap: 12px; 
+      flex: 1;
+    }
+    
+    /* 移除旧的红色边框报警样式，改为文字发光，更高级 */
+    .group-header.has-offline { 
+      border-left: none; 
+      background: transparent; 
+    }
+    .group-header.has-offline .group-title { 
+      color: var(--error); 
+      text-shadow: 0 0 15px rgba(239, 68, 68, 0.4); /* 红色光晕 */
+    }
+    .group-stats {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .stat-online { color: var(--success); }
+    .stat-offline { color: var(--error); }
+    .stat-latency { color: #38bdf8; font-family: monospace; font-weight: 600; }
     .group-arrow { transition: transform 0.3s; }
     .group-collapsed .group-arrow { transform: rotate(-90deg); }
-    .group-content { margin-top: 12px; display: flex; flex-direction: column; gap: 12px; }
+    .group-content { 
+      display: grid; 
+      /* 强制桌面端显示3列，卡片更紧凑 */ 
+      grid-template-columns: repeat(3, 1fr); 
+      gap: 12px; 
+      margin-top: 12px; 
+    } 
+    /* 手机端保持1列 */ 
+    @media (max-width: 768px) { 
+      .group-content { grid-template-columns: 1fr; } 
+    }
     .group-collapsed .group-content { display: none; }
 
-    .monitor-item {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
+    .monitor-item { 
+      background: var(--card-bg); /* 使用通透背景 */
+      border: 1px solid var(--border); 
+      border-radius: 12px; 
+      padding: 14px; 
+      backdrop-filter: blur(20px); /* 加强毛玻璃 */
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); /* 增加投影 */
+      display: flex; 
+      flex-direction: column; 
+      justify-content: space-between; 
+      min-height: auto; 
       transition: all 0.3s ease;
+      position: relative; /* 关键：为悬浮按钮提供定位基准 */
+    } 
+    .monitor-item:hover { 
+      transform: translateY(-3px); 
+      border-color: var(--primary); 
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2); 
     }
-    .monitor-item:hover { border-color: var(--primary); transform: translateY(-2px); }
+    .monitor-item.offline { 
+      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.05);
+    }
+    .monitor-item.offline:hover { border-color: var(--error); }
     
-    .item-main { display: flex; justify-content: space-between; align-items: center; }
-    .url-info { display: flex; flex-direction: column; gap: 6px; overflow: hidden; flex: 1; }
-    .url-text { font-weight: 600; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+    /* 新的布局结构 */
+    .monitor-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 8px;
+    }
+
+    .monitor-info {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+      padding-right: 12px;
+    }
+
+    .monitor-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+
+    .url-title { 
+      font-size: 1rem; 
+      font-weight: 700; 
+      color: #fff; 
+      white-space: nowrap; 
+      overflow: hidden; 
+      text-overflow: ellipsis; 
+    }
+
+    .btn-copy-mini {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.6;
+      transition: all 0.2s;
+    }
+    .btn-copy-mini:hover {
+      color: var(--primary);
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    .url-path {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      word-break: break-all;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 1; /* 只显示一行 */
+      -webkit-box-orient: vertical;
+    }
+
+    .monitor-status {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      min-width: fit-content;
+    }
     
-    .status-row { display: flex; align-items: center; gap: 12px; }
-    .status-badge { font-size: 0.65rem; padding: 3px 10px; border-radius: 6px; font-weight: 700; text-transform: uppercase; }
-    .status-online { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
-    .status-offline { background: rgba(239, 68, 68, 0.15); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); }
-    .latency { font-size: 0.75rem; color: #38bdf8; font-family: monospace; transition: all 0.3s ease; font-weight: 600; }
-    .latency-update { color: #fff; text-shadow: 0 0 8px var(--primary); }
+    .status-badge { 
+      font-size: 0.75rem; 
+      padding: 4px 10px; 
+      border-radius: 8px; 
+      font-weight: 700; 
+      text-transform: uppercase; 
+      width: fit-content;
+      line-height: 1;
+    }
+    .status-online { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+    .status-offline { background: rgba(239, 68, 68, 0.15); color: var(--error); }
+    .status-checking { background: rgba(148, 163, 184, 0.15); color: var(--text-muted); }
 
-    .history-bar { display: flex; gap: 4px; margin-top: 14px; }
-    .history-dot { width: 100%; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.05); }
-    .dot-online { background: var(--success); opacity: 0.7; }
-    .dot-offline { background: var(--error); opacity: 0.9; }
+    .latency { 
+      font-size: 0.7rem; 
+      color: #38bdf8; 
+      font-family: monospace; 
+      font-weight: 600; 
+    }
+    
+    /* 悬浮操作按钮 */
+    .hover-actions {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transform: translateX(10px);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none; /* 默认不可点击 */
+      z-index: 10;
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 8px;
+      padding: 2px;
+      border: 1px solid var(--border);
+      backdrop-filter: blur(4px);
+    }
+    
+    .monitor-item:hover .hover-actions {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+    
+    .btn-action-mini {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-action-mini:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    .btn-action-mini.delete:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--error);
+    }
 
-    .actions { display: flex; gap: 10px; }
+    /* 旧样式清理 */
+    .monitor-header, .actions, .url-info, .status-info, .domain-info, .status-info-text {
+      display: none; 
+    }
     .btn {
       background: var(--primary);
       color: white;
       border: none;
       padding: 8px 16px;
-      border-radius: 10px;
+      border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
       font-size: 0.85rem;
+      min-width: auto;
     }
     .btn:hover { background: var(--primary-hover); }
-    .btn-icon { background: rgba(255,255,255,0.05); color: var(--text-muted); padding: 8px; border: 1px solid var(--border); }
-    .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); }
+    .btn-icon { 
+      background: rgba(255,255,255,0.05); 
+      color: var(--text-muted); 
+      padding: 6px; 
+      border: 1px solid var(--border); 
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+    .btn-icon:hover { 
+      background: rgba(255,255,255,0.1); 
+      border-color: var(--primary); 
+      transform: translateY(-1px); 
+    }
+    .btn-danger { 
+      background: rgba(239, 68, 68, 0.1); 
+      color: var(--error); 
+      border: 1px solid rgba(239, 68, 68, 0.2); 
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+    .btn-danger:hover { 
+      background: rgba(239, 68, 68, 0.2); 
+      border-color: var(--error); 
+      transform: translateY(-1px); 
+    }
 
-    .admin-panel { margin-top: 50px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 30px; }
+    .history-bar { 
+      display: none;
+    }
+
+    /* Badge styles */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-right: 6px;
+      transition: all 0.2s ease;
+    }
+    .badge-success {
+      background-color: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+    }
+    .badge-error {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: var(--error);
+    }
+    .badge-neutral {
+      background-color: rgba(100, 116, 139, 0.15);
+      color: var(--text-muted);
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .group-content { grid-template-columns: 1fr; }
+      .monitor-header { flex-direction: column; align-items: flex-start; }
+      .status-info { align-items: flex-start; margin-top: 8px; }
+      .actions { justify-content: flex-start; }
+    }
+
+    .admin-container { margin-top: 50px; }
+    .admin-toggle-btn {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 15px;
+      color: var(--text-muted);
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .admin-toggle-btn:hover {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .admin-panel { 
+      background: var(--card-bg); 
+      border: 1px solid var(--border); 
+      border-radius: 20px; 
+      padding: 30px; 
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 1;
+      transform: translateY(0);
+      margin-top: 20px;
+      max-height: 1000px;
+    }
+    .admin-panel.collapsed {
+      padding: 0;
+      border: none;
+      max-height: 0;
+      opacity: 0;
+      margin-top: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+    }
     .input-group { display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; }
     .input-field {
       background: rgba(15, 23, 42, 0.6);
@@ -136,11 +516,23 @@ const HTML_PAGE = `
       width: 100%;
     }
     
-    .toast {
-      position: fixed; bottom: 30px; right: 30px;
-      background: #1e293b; color: white; padding: 14px 28px;
-      border-radius: 12px; border: 1px solid var(--border);
-      display: none; z-index: 1000;
+    /* 修正后的 Toast 居中样式 */
+    .toast { 
+      position: fixed; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%);
+      background: rgba(15, 23, 42, 0.95);
+      color: white;
+      padding: 16px 32px;
+      border-radius: 50px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+      display: none;
+      z-index: 3000;
+      font-weight: 600;
+      backdrop-filter: blur(8px);
+      text-align: center;
     }
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -156,7 +548,29 @@ const HTML_PAGE = `
     .modal-active .modal { transform: scale(1); }
     .modal-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; color: #fff; }
     .modal-text { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; line-height: 1.5; }
-    .modal-btns { display: flex; gap: 12px; justify-content: center; }
+    /* 弹窗底部按钮容器 */
+    .modal-btns { 
+      display: flex; 
+      gap: 12px; 
+      justify-content: space-between; /* 确保撑满两端 */
+      width: 100%;
+    }
+    /* 强制修正弹窗内的所有按钮样式 */ 
+    .modal-btns button, 
+    .modal-btns .btn, 
+    .modal-btns .login-btn { 
+      flex: 1;                 /* 平分宽度 */ 
+      height: 46px;            /* 核心：强制固定高度 */ 
+      line-height: 46px;       /* 确保文字垂直居中（辅助） */ 
+      padding: 0 !important;   /* 既然定了高度，padding就可以去掉了，防止撑大 */ 
+      margin: 0 !important;    /* 清除所有干扰边距 */ 
+      border: 1px solid transparent; /* 核心：给所有按钮都加一个透明边框，防止有的按钮有边框有的没导致的高度差 */ 
+      white-space: nowrap;     
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      width: auto !important; 
+    }
     
     .login-modal { max-width: 380px; }
     .login-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; background: linear-gradient(to bottom right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -207,29 +621,49 @@ const HTML_PAGE = `
     <header>
       <h1>Sentinel</h1>
       <p class="subtitle">智能在线哨兵 · 生产级监控</p>
-      <div id="liveClock" style="margin-top: 15px; font-family: monospace; color: var(--primary); font-weight: 600; font-size: 1.1rem; letter-spacing: 1px;"></div>
+      <button class="logout-btn-top" onclick="logout()" title="退出登录 / Logout">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+      </button>
+      <div id="liveClock" style="margin-top: 5px; font-family: monospace; color: var(--primary); font-weight: 600; font-size: 1.1rem; letter-spacing: 1px;"></div>
     </header>
 
-    <div class="stats">
-      <div class="stat-card"><div class="stat-label">总监控</div><div class="stat-value" id="totalCount">0</div></div>
-      <div class="stat-card"><div class="stat-label">在线</div><div class="stat-value" style="color:var(--success)" id="onlineCount">0</div></div>
-      <div class="stat-card"><div class="stat-label">异常</div><div class="stat-value" style="color:var(--error)" id="offlineCount">0</div></div>
+    <div class="dashboard-row">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">总监控</div>
+          <div class="stat-value" id="totalCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">在线</div>
+          <div class="stat-value" style="color:var(--success)" id="onlineCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">异常</div>
+          <div class="stat-value" style="color:var(--error)" id="offlineCount">0</div>
+        </div>
+      </div>
     </div>
 
     <div id="monitorList"></div>
 
-    <div class="admin-panel">
-      <h3 style="margin-bottom:20px; font-weight:700;">管理面板 / Admin Panel</h3>
-      <div class="input-group">
-        <input type="text" id="groupName" class="input-field" placeholder="分类名称 / Group Name (e.g. Production, Personal)">
-        <textarea id="newUrls" class="input-field" style="min-height: 100px;" placeholder="输入 URL，每行一个 / Enter URLs, one per line"></textarea>
+    <div class="admin-container">
+      <div class="admin-toggle-btn" onclick="toggleAdminPanel()">
+        <span id="adminToggleText">+ 添加新监控 / Add New Monitor</span>
       </div>
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="display:flex; gap:12px;">
-          <button class="btn" id="addBtn" onclick="addUrls()">批量添加 / Add</button>
-          <button class="btn" style="background:#475569" onclick="exportConfig()">导出 / Export</button>
+      <div class="admin-panel collapsed" id="adminPanel">
+        <h3 style="margin-bottom:20px; font-weight:700;">管理面板 / Admin Panel</h3>
+        <div class="input-group">
+          <input type="text" id="groupName" class="input-field" placeholder="分类名称 / Group Name (e.g. Production, Personal)">
+          <textarea id="newUrls" class="input-field" style="min-height: 100px;" placeholder="输入 URL，每行一个 / Enter URLs, one per line"></textarea>
         </div>
-        <button class="btn btn-danger" onclick="logout()">退出 / Logout</button>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+             <button class="btn" id="addBtn" onclick="addUrls()">批量添加 / Add</button>
+             <button class="btn" style="background:#475569" onclick="exportConfig()">导出 / Export</button>
+          </div>
       </div>
     </div>
   </div>
@@ -269,6 +703,33 @@ const HTML_PAGE = `
   <script>
     let allUrls = [];
     let historyData = {};
+    
+    // 初始化全局变量
+    window.editingId = null;
+    window.originalValues = {};
+    
+    // 实时时钟
+    function updateClock() {
+      const now = new Date();
+      const options = { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit',
+        hour12: false 
+      };
+      const timeString = now.toLocaleString('zh-CN', options);
+      const clockEl = document.getElementById('liveClock');
+      if (clockEl) {
+        clockEl.innerText = timeString;
+      }
+    }
+    
+    // 启动时钟
+    setInterval(updateClock, 1000);
+    updateClock(); // 立即更新一次
     
     function getSafeId(str) {
       let hash = 0;
@@ -379,6 +840,7 @@ const HTML_PAGE = `
             historyData = data.history || {};
             render();
             checkAll();
+            setupStatCards(); // 设置统计卡点击功能
             return; // 直接结束，不显示登录框
           } 
         } catch (e) {
@@ -394,7 +856,7 @@ const HTML_PAGE = `
       // 等待 showLoginModal 解析（即用户点击登录且成功后）
       const newPass = await showLoginModal();
       
-      // 登录成功后，再次调用 init 加载数据（此时 savedPass 逻辑会被跳过，因为已经拿到 newPass 了，或者递归调用会走缓存逻辑，但这里直接调 apiFetch 更简单，不过为了逻辑复用，重新 init 也可以）
+      // 登录成功后，再次调用 init 加载数据
       if (newPass) {
           init();
       }
@@ -418,10 +880,42 @@ const HTML_PAGE = `
         if (!groups[group]) groups[group] = [];
         groups[group].push({ raw: item, url: url });
       });
+      
+      // 排序：有异常的分类置顶
+      const sortedGroups = Object.entries(groups).sort(([groupA, itemsA], [groupB, itemsB]) => {
+        const offlineA = itemsA.filter(item => window.itemStatuses?.[getSafeId(item.raw)] === 'offline').length;
+        const offlineB = itemsB.filter(item => window.itemStatuses?.[getSafeId(item.raw)] === 'offline').length;
+        if (offlineA > 0 && offlineB === 0) return -1;
+        if (offlineA === 0 && offlineB > 0) return 1;
+        return groupA.localeCompare(groupB);
+      });
+      
       let html = '';
-      for (const groupName in groups) {
-        const items = groups[groupName];
+      for (const [groupName, items] of sortedGroups) {
         const groupId = getSafeId(groupName);
+        
+        // 计算分类统计
+        let groupOnline = 0, groupOffline = 0, totalLatency = 0, latencyCount = 0;
+        items.forEach(item => {
+          const itemId = getSafeId(item.raw);
+          const status = window.itemStatuses?.[itemId];
+          if (status === 'online') groupOnline++;
+          else if (status === 'offline') groupOffline++;
+          
+          // 计算延迟
+          const latencyEl = document.getElementById('latency-' + itemId);
+          if (latencyEl && latencyEl.innerText && latencyEl.innerText !== '') {
+            const latency = parseInt(latencyEl.innerText.replace('ms', ''));
+            if (!isNaN(latency)) {
+              totalLatency += latency;
+              latencyCount++;
+            }
+          }
+        });
+        
+        const avgLatency = latencyCount > 0 ? Math.round(totalLatency / latencyCount) : 0;
+        const hasOffline = groupOffline > 0;
+        
         let itemsHtml = '';
         items.forEach(item => {
           const history = historyData[item.raw] || [];
@@ -432,36 +926,78 @@ const HTML_PAGE = `
             const dotClass = status === undefined ? '' : (status ? 'dot-online' : 'dot-offline');
             dotsHtml += '<div class="history-dot ' + dotClass + '"></div>';
           }
+          
+          // 提取域名信息
+          let domain = item.url;
+          try {
+            const urlObj = new URL(item.url);
+            domain = urlObj.hostname;
+          } catch (e) {
+            // 如果URL解析失败，使用原始URL
+          }
+          
+          // 截取URL的host和path，用于显示
+          let displayUrl = item.url;
+          try {
+            const urlObj = new URL(item.url);
+            // 显示hostname + path，但不包含协议和查询参数
+            displayUrl = urlObj.hostname + urlObj.pathname;
+            // 如果路径太长，截断它
+            if (displayUrl.length > 40) {
+              displayUrl = displayUrl.substring(0, 40) + '...';
+            }
+          } catch (e) {
+            // 如果URL解析失败，使用原始URL
+            if (displayUrl.length > 40) {
+              displayUrl = displayUrl.substring(0, 40) + '...';
+            }
+          }
+
           itemsHtml += \`
             <div class="monitor-item" id="item-\${itemId}">
-              <div class="item-main">
-                <div class="url-info">
-                  <div class="url-text" title="\${item.url}">\${item.url}</div>
-                  <div class="status-row">
-                    <span id="status-\${itemId}" class="status-badge status-checking">检测中...</span>
-                    <span id="latency-\${itemId}" class="latency"></span>
+              <div class="hover-actions">
+                <button class="btn-action-mini" onclick="editUrl('\${item.raw.replace(/'/g, "\\\\'")}')" title="编辑">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </button>
+                <button class="btn-action-mini delete" onclick="deleteUrl('\${item.raw.replace(/'/g, "\\\\'")}')" title="删除">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path></svg>
+                </button>
+              </div>
+
+              <div class="monitor-main">
+                <div class="monitor-info">
+                  <div class="monitor-title-row">
+                    <div class="url-title" title="\${item.url}">\${domain}</div>
+                    <button class="btn-copy-mini" onclick="copyUrl('\${item.url}')" title="复制">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
                   </div>
+                  \${(displayUrl === domain || displayUrl === domain + '/') ? '' : \`<div class="url-path" title="\${item.url}">\${displayUrl}</div>\`}
                 </div>
-                <div class="actions">
-                  <button class="btn btn-icon" onclick="copyUrl('\${item.url}')" title="复制">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                  </button>
-                  <button class="btn btn-icon" onclick="editUrl('\${item.raw.replace(/'/g, "\\\\\\\\'")}')" title="编辑">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                  </button>
-                  <button class="btn btn-danger" onclick="deleteUrl('\${item.raw.replace(/'/g, "\\\\\\\\'")}')">删除</button>
+                <div class="monitor-status">
+                  <span id="status-\${itemId}" class="status-badge status-checking">Checking</span>
+                  <span id="latency-\${itemId}" class="latency"></span>
                 </div>
               </div>
               <div class="history-bar">\${dotsHtml}</div>
             </div>
           \`;
         });
+        
+        // 智能折叠：有异常自动展开，全正常默认折叠
+        const isCollapsed = !hasOffline;
+
         html += \`
-          <div class="group-container" id="group-\${groupId}">
-            <div class="group-header" onclick="toggleGroup('\${groupId}')">
-              <div class="group-title">
+          <div class="group-container\${isCollapsed ? ' group-collapsed' : ''}\${hasOffline ? ' has-offline' : ''}" id="group-\${groupId}">
+            <div class="group-header\${hasOffline ? ' has-offline' : ''}" onclick="toggleGroup('\${groupId}')">
+              <div class="group-title" id="group-title-\${groupId}">
                 <svg class="group-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
-                \${groupName} (\${items.length})
+                \${groupName}
+              </div>
+              <div class="group-stats">
+                \${groupOnline > 0 ? \`<span class="badge badge-success">\${groupOnline} 在线</span>\` : ''}
+                \${groupOffline > 0 ? \`<span class="badge badge-error" style="\${groupOffline > 0 ? 'box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);' : ''}">\${groupOffline} 异常</span>\` : ''}
+                \${avgLatency > 0 ? \`<span class="badge badge-neutral">Avg \${avgLatency}ms</span>\` : ''}
               </div>
             </div>
             <div class="group-content">\${itemsHtml}</div>
@@ -475,7 +1011,15 @@ const HTML_PAGE = `
       document.getElementById('group-' + id).classList.toggle('group-collapsed');
     }
 
+    // 全局变量用于存储轮询定时器
+    let checkAllTimer = null;
+
     async function checkAll() {
+      // 清除之前的定时器（如果存在）
+      if (checkAllTimer) {
+        clearInterval(checkAllTimer);
+      }
+
       // 全局状态存储，用于记录每个监控项的当前状态
       window.itemStatuses = {};
       
@@ -493,20 +1037,38 @@ const HTML_PAGE = `
             const data = await res.json();
             const latency = Date.now() - start;
             
+            // 1. 清理旧的错误文字元素（如果有的话）
+            const oldErrorText = document.getElementById('status-info-' + itemId);
+            if (oldErrorText) oldErrorText.remove();
+
             if (badge) {
               if (data.ok) {
                 badge.innerText = 'ONLINE ' + data.status;
                 badge.className = 'status-badge status-online';
+                badge.title = 'Service is online'; // 统一加 title
+                
                 latEl.innerText = latency + 'ms';
+                latEl.style.opacity = '1';
                 latEl.classList.add('latency-update');
                 setTimeout(() => { latEl.classList.remove('latency-update'); }, 500);
                 
                 // 记录状态为在线
                 window.itemStatuses[itemId] = 'online';
               } else {
-                badge.innerText = 'OFFLINE ' + (data.status || 'ERR');
+                const statusCode = data.status || 'ERR';
+                badge.innerText = 'OFFLINE ' + statusCode;
                 badge.className = 'status-badge status-offline';
+
+                // 添加状态码解释到 title 属性
+                const statusExplain = getStatusExplanation(statusCode);
+                // 核心修改：错误信息只进 title，不进 DOM
+                badge.title = statusExplain;
                 
+                // 关键修复：不要删除或隐藏 latency 元素，而是填入占位符，保持高度一致
+                latEl.innerText = '---';
+                latEl.style.opacity = '0.5'; // 让它变暗，表示无效
+                latEl.className = 'latency'; // 确保样式类名一致
+
                 // 记录状态为异常
                 window.itemStatuses[itemId] = 'offline';
               }
@@ -514,6 +1076,15 @@ const HTML_PAGE = `
           } catch (e) { 
             // 记录状态为异常
             window.itemStatuses[itemId] = 'offline';
+            if (badge) {
+               badge.innerText = 'ERROR';
+               badge.className = 'status-badge status-offline';
+               badge.title = '连接失败 / Connection Failed';
+               // 关键修复：保持高度一致
+               latEl.innerText = '---';
+               latEl.style.opacity = '0.5';
+               latEl.className = 'latency';
+            }
           }
           
           // 更新统计显示（基于所有监控项的状态）
@@ -521,11 +1092,21 @@ const HTML_PAGE = `
         };
 
         await runCheck();
-        // 开启高频循环检测，每 3-5 秒更新一次延迟，增强实时动感
-        setInterval(runCheck, 3000 + Math.random() * 2000);
       };
 
-      allUrls.forEach(item => checkOne(item));
+      // 并行检查所有URL
+      await Promise.all(allUrls.map(item => checkOne(item)));
+
+      // 设置统一轮询，每60秒刷新一次所有URL (保护Cloudflare免费额度)
+      checkAllTimer = setInterval(async () => {
+        await Promise.all(allUrls.map(item => checkOne(item)));
+      }, 60000);
+    }
+
+    // 添加手动刷新按钮功能
+    function manualRefresh() {
+      checkAll();
+      showToast('已刷新所有监控项 / All monitors refreshed');
     }
 
     function updateGlobalStats() {
@@ -542,6 +1123,63 @@ const HTML_PAGE = `
       // 添加灵动动画效果
       animateNumber('onlineCount', online);
       animateNumber('offlineCount', offline);
+
+      // 更新分类显示状态
+      const groups = {};
+      allUrls.forEach(item => {
+        let group = '默认分类', url = item;
+        if (item.includes(':http')) {
+          const idx = item.indexOf(':http');
+          group = item.substring(0, idx);
+          url = item.substring(idx + 1);
+        }
+        if (!groups[group]) groups[group] = [];
+        groups[group].push(item);
+      });
+
+      // 更新每个分类的统计显示
+      for (const groupName in groups) {
+        const groupId = getSafeId(groupName);
+        const groupHeader = document.getElementById('group-' + groupId)?.querySelector('.group-header');
+        const groupStatsEl = groupHeader?.querySelector('.group-stats');
+        
+        if (groupHeader && groupStatsEl) {
+          let groupOnline = 0, groupOffline = 0;
+          groups[groupName].forEach(item => {
+            const itemId = getSafeId(item);
+            const status = window.itemStatuses ? window.itemStatuses[itemId] : null;
+            if (status === 'online') groupOnline++;
+            else if (status === 'offline') groupOffline++;
+          });
+          
+          // 更新分类统计显示
+          groupStatsEl.innerHTML = \`
+            \${groupOnline > 0 ? \`<span class="stat-online">\${groupOnline}🟢</span>\` : ''}
+            \${groupOffline > 0 ? \`<span class="stat-offline">\${groupOffline}🔴</span>\` : ''}
+          \`;
+          
+          // 更新分类样式
+          if (groupOffline > 0) {
+            groupHeader.classList.add('has-offline');
+          } else {
+            groupHeader.classList.remove('has-offline');
+          }
+          
+          // 更新URL项样式
+          groups[groupName].forEach(item => {
+            const itemId = getSafeId(item);
+            const itemEl = document.getElementById('item-' + itemId);
+            if (itemEl) {
+              const status = window.itemStatuses ? window.itemStatuses[itemId] : null;
+              if (status === 'offline') {
+                itemEl.classList.add('offline');
+              } else {
+                itemEl.classList.remove('offline');
+              }
+            }
+          });
+        }
+      }
       
       // 设置定期轻微跳动效果（即使数字不变也跳动）
       if (!window.continuousAnimation) {
@@ -620,6 +1258,19 @@ const HTML_PAGE = `
     function editUrl(raw) {
       const itemId = getSafeId(raw);
       const itemEl = document.querySelector('#item-' + itemId);
+      
+      if (!itemEl) return;
+      
+      // 检查是否已经在编辑状态（单例约束）
+      if (window.editingId === itemId) {
+        return; // 如果已经在编辑状态，直接返回，避免重复渲染
+      }
+      
+      // 检查是否正在编辑其他条目，如果是则先取消之前的编辑
+      if (window.editingId && window.editingId !== itemId) {
+        cancelEdit(window.editingId);
+      }
+      
       let group = '默认分类', url = raw;
       if (raw.includes(':http')) {
         const idx = raw.indexOf(':http');
@@ -628,20 +1279,55 @@ const HTML_PAGE = `
       }
       
       const originalHtml = itemEl.innerHTML;
+      // 简化转义逻辑，使用更安全的方法
+      const escapedOriginalHtml = originalHtml.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      const escapedRaw = raw.replace(/'/g, "\\'");
+      
+      // 设置编辑状态
+      window.editingId = itemId;
+      window.originalValues[itemId] = { group, url, raw, originalHtml };
+      
       itemEl.innerHTML = \`
         <div class="edit-mode" style="display:flex; flex-direction:column; gap:10px; width:100%;">
           <input type="text" id="edit-group-\${itemId}" class="input-field" style="padding:8px; font-size:0.85rem;" value="\${group === '默认分类' ? '' : group}" placeholder="分类名称">
           <input type="text" id="edit-url-\${itemId}" class="input-field" style="padding:8px; font-size:0.85rem;" value="\${url}" placeholder="URL">
           <div style="display:flex; gap:8px; justify-content:flex-end;">
-            <button class="btn" style="background:#475569; padding:5px 12px;" onclick="cancelEdit('\${itemId}', \\\`\${originalHtml.replace(/\\\`/g, '\\\\\\\\\\\`').replace(/\\$/g, '\\\\\\\\$')}\\\`)">取消</button>
-            <button class="btn" style="padding:5px 12px;" onclick="saveEdit('\${itemId}', '\${raw.replace(/'/g, "\\\\\\\\'")}')">保存</button>
+            <button type="button" class="btn" style="background:#475569; padding:5px 12px;" onclick="cancelEdit('\${itemId}')">取消</button>
+            <button type="button" class="btn" style="padding:5px 12px;" onclick="saveEdit('\${itemId}', '\${escapedRaw}')">保存</button>
           </div>
         </div>
       \`;
+      
+      // 自动聚焦到URL输入框
+      setTimeout(() => {
+        const urlInput = document.getElementById('edit-url-' + itemId);
+        if (urlInput) urlInput.focus();
+      }, 10);
     }
 
-    function cancelEdit(itemId, originalHtml) {
-      document.querySelector('#item-' + itemId).innerHTML = originalHtml;
+    function cancelEdit(itemId) {
+      const itemEl = document.querySelector('#item-' + itemId);
+      
+      // 确保取消操作总是能退出编辑状态
+      if (itemEl && window.originalValues && window.originalValues[itemId]) {
+        // 恢复原始HTML
+        itemEl.innerHTML = window.originalValues[itemId].originalHtml;
+        
+        // 重置编辑状态
+        window.editingId = null;
+        delete window.originalValues[itemId];
+      } else {
+        // 如果无法恢复原始状态，至少重置编辑状态
+        window.editingId = null;
+        if (window.originalValues && window.originalValues[itemId]) {
+          delete window.originalValues[itemId];
+        }
+      }
+      
+      // 确保编辑状态完全清除
+      if (window.editingId === itemId) {
+        window.editingId = null;
+      }
     }
 
     async function saveEdit(itemId, oldRaw) {
@@ -716,7 +1402,40 @@ const HTML_PAGE = `
     }
 
     function copyUrl(url) {
-      navigator.clipboard.writeText(url).then(() => showToast('已复制 / Copied'));
+      navigator.clipboard.writeText(url).then(() => showToast('已复制完整URL / Copied full URL'));
+    }
+
+    function copyHost(host) {
+      navigator.clipboard.writeText(host).then(() => showToast('已复制域名 / Copied host'));
+    }
+
+    // 获取状态码解释
+    function getStatusExplanation(statusCode) {
+      const explanations = {
+        // 4xx 客户端错误
+        '400': '请求错误 - 请求格式不正确',
+        '401': '认证失败 - 需要登录或凭据无效',
+        '403': '禁止访问 - 没有权限访问此资源',
+        '404': '未找到 - 请求的资源不存在',
+        '408': '请求超时 - 服务器等待请求时超时',
+        '429': '请求过多 - 超过了速率限制',
+
+        // 5xx 服务器错误
+        '500': '服务器内部错误',
+        '501': '未实现 - 服务器不支持该功能',
+        '502': '网关错误 - 上游服务器响应无效',
+        '503': '服务不可用 - 服务器暂时过载或维护',
+        '504': '网关超时 - 上游服务器响应超时',
+        '521': 'Web服务器已关闭 - 源站拒绝连接',
+        '522': '连接超时 - Cloudflare无法连接到源站',
+        '523': '源站已崩溃 - 源站连接已断开',
+        '524': '超时错误 - 发生了超时',
+
+        // 其他
+        'ERR': '连接失败 - 无法建立连接'
+      };
+
+      return explanations[statusCode] || '未知错误 - 无法确定具体原因';
     }
 
     function exportConfig() {
@@ -773,22 +1492,67 @@ const HTML_PAGE = `
       location.reload();
     }
 
-    function updateClock() {
-      const now = new Date();
-      const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-      const el = document.getElementById('liveClock');
-      if (el) el.innerText = now.toLocaleString(undefined, options);
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
     function showToast(msg) {
       const t = document.getElementById('toast');
       t.innerText = msg;
       t.style.display = 'block';
       setTimeout(() => t.style.display = 'none', 3000);
     }
+    
+    // 统计卡点击功能
+    function setupStatCards() {
+      const offlineCard = document.getElementById('offlineCount').closest('.stat-card');
+      if (offlineCard) {
+        offlineCard.addEventListener('click', function() {
+          const offlineCount = parseInt(document.getElementById('offlineCount').innerText);
+          if (offlineCount > 0) {
+            navigateToFirstOffline();
+          }
+        });
+      }
+    }
+    
+    function navigateToFirstOffline() {
+      // 找到第一个有异常的分类
+      const offlineGroups = document.querySelectorAll('.group-header.has-offline');
+      if (offlineGroups.length > 0) {
+        const firstOfflineGroup = offlineGroups[0];
+        const groupId = firstOfflineGroup.closest('.group-container').id.replace('group-', '');
+        
+        // 展开分类
+        const groupEl = document.getElementById('group-' + groupId);
+        if (groupEl && groupEl.classList.contains('group-collapsed')) {
+          groupEl.classList.remove('group-collapsed');
+        }
+        
+        // 找到分类中的第一个异常项
+        const offlineItems = groupEl.querySelectorAll('.monitor-item.offline');
+        if (offlineItems.length > 0) {
+          const firstOfflineItem = offlineItems[0];
+          
+          // 滚动到该元素并高亮显示
+          firstOfflineItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          firstOfflineItem.style.transition = 'all 0.3s ease';
+          firstOfflineItem.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.3)';
+          firstOfflineItem.style.transform = 'scale(1.02)';
+          
+          // 2秒后移除高亮效果
+          setTimeout(() => {
+            firstOfflineItem.style.boxShadow = '';
+            firstOfflineItem.style.transform = '';
+          }, 2000);
+        }
+      }
+    }
+
+    function toggleAdminPanel() {
+      const panel = document.getElementById('adminPanel');
+      panel.classList.toggle('collapsed');
+    }
+
+    // 启动初始化
     init();
+
   </script>
 </body>
 </html>

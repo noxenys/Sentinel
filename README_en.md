@@ -1,6 +1,6 @@
 # 🛡️ Sentinel - Website Monitoring & Alert System
 
-Sentinel v3.6 In-place Edition is a modern website monitoring system built on Cloudflare Workers, providing real-time status monitoring, multi-platform alerts, in-place editing capabilities, and an elegant user interface.
+Sentinel v3.7 In-place Edition is a modern website monitoring system built on Cloudflare Workers, providing real-time status monitoring, multi-platform alerts, in-place editing capabilities, and an elegant user interface.
 
 ## ✨ Core Features
 
@@ -13,6 +13,12 @@ Sentinel v3.6 In-place Edition is a modern website monitoring system built on Cl
 - **Secure Authentication**: Modern password authentication system with local and session storage support, clears all authentication info after complete logout
 - **Modern Custom Modals**: Unified login and logout interface with elegant interaction experience
 - **Bilingual UI & Local Clock**: Chinese-English bilingual support with real-time local time display
+- **Responsive Design**: Fully optimized for desktop and mobile devices with enhanced touch experience
+- **Smart Status Categorization**: Automatically prioritize failed services, category headers display dynamic statistics
+- **Status Code Explanation**: Detailed HTTP status code explanations for quick problem diagnosis
+- **Batch Operations**: Support for batch adding monitors and configuration export
+
+- **One-click Deployment**: Based on Cloudflare Workers, quick deployment
 
 ## 🚀 Quick Start
 
@@ -48,9 +54,18 @@ Sentinel v3.6 In-place Edition is a modern website monitoring system built on Cl
 | `DISCORD_WEBHOOK` | Discord Webhook URL | ❌ | - |
 | `GENERIC_WEBHOOK` | Generic Webhook URL (supports Lark, DingTalk, etc.) | ❌ | - |
 
-### Step 4: Configure Scheduled Tasks
-- In Worker's **Triggers** tab
-- Add Cron Trigger: `*/30 * * * *` (every 30 minutes)
+### Step 4: Configure Scheduled Tasks (Cron Triggers)
+To enable background monitoring and failure alerts, you must configure Cron Triggers. The Worker runs at this frequency even if the web page is closed.
+Choose a frequency based on your **monitor count** and **Cloudflare plan**:
+| Plan | Cron Expression | Description | Use Case |
+| :--- | :--- | :--- | :--- |
+| **🛡️ Recommended** | `*/10 * * * *` | **Every 10 mins** | **Most users**. Safe for 50+ monitors. |
+| **🚀 Turbo Mode** | `* * * * *` | **Every 1 min** | **< 20 monitors only**. Fastest response, higher usage. |
+| **🐢 Power Saver** | `*/30 * * * *` | **Every 30 mins** | For massive non-critical monitors. |
+> **⚠️ Traffic Warning (Cloudflare Free Tier)**
+> Free Tier limit: **100,000 requests/day**.
+> * **Formula**: `Monitor Count` × `1440` (if 1 min interval) = Daily Requests
+> * **Example**: **20 monitors** at **1 min interval** = `28,800` requests/day (Safe). If you have >60 monitors, decrease frequency to 10 mins to avoid hitting limits.
 
 ## 📖 Detailed Usage Guide
 
@@ -100,26 +115,37 @@ Sentinel v3.6 In-place Edition is a modern website monitoring system built on Cl
 ## 🏗️ Technical Architecture
 
 ### Frontend Stack
-- **HTML5**: Semantic markup, modern structure
-- **CSS3**: Gradient backgrounds, frosted glass effects, animation transitions
-- **JavaScript ES6+**: Modular code, asynchronous processing
-- **Responsive Design**: Mobile-friendly
+- **HTML5 + CSS3 + JavaScript ES6+**
+- Modern UI components with frosted glass effects and animations
+- Responsive design for desktop and mobile devices
+- Real-time clock and dynamic data updates
 
 ### Backend Stack
-- **Cloudflare Workers**: Edge computing, globally distributed
-- **KV Storage**: Persistent data storage
-- **RESTful API**: Clear interface design
-- **Cron Triggers**: Scheduled task execution
+- **Cloudflare Workers** as serverless runtime environment
+- **KV Storage** for persistent data
+- **Scheduled tasks** for periodic checks
+- **RESTful API** design
+
+### Security Features
+- Password authentication system with local and session storage
+- API endpoint protection using X-Password header authentication
+- Complete authentication info clearance after logout
+
+### Feature Set
+- Real-time monitoring and latency measurement
+- Multi-platform alerts (Telegram, Discord, Webhook)
+- Smart status categorization and history records
+- Batch operations and configuration export
+- Status code explanation and error diagnosis
 
 ### Monitoring Algorithm
-```javascript
-// High-frequency detection logic
-setInterval(async () => {
-    const latency = await checkUrl(url);
-    updateStatus(latency);
-    updateGlobalStats();
-}, 3000 + Math.random() * 2000);
-```
+
+The system uses Cloudflare Workers' Cron triggers for scheduled monitoring, checking all monitored items every 10 minutes by default.
+
+1. **Scheduled Triggering**: Monitors scheduled events through `addEventListener('scheduled')`
+2. **Concurrent Detection**: Uses `Promise.all` to check all websites in parallel for efficiency
+3. **Status Recording**: Maintains the last 50 check results for each website to generate historical charts
+4. **Smart Alerts**: Sends notifications only on status changes with a 1-hour cooldown to prevent spam
 
 ## 🔧 Development Guide
 
@@ -140,8 +166,9 @@ npm run dev
 ```
 sentinel/
 ├── worker.js          # Main program file
-├── README.md          # Project documentation
-└── package.json       # Project configuration
+├── README.md          # Main project documentation
+├── README_zh.md       # Chinese documentation
+└── README_en.md       # English documentation
 ```
 
 ### API Endpoints
