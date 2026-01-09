@@ -86,33 +86,6 @@ const HTML_PAGE = `
       flex: 1; /* 占据剩余所有空间 */
     }
 
-    /* 右侧：独立的刷新按钮卡片 */
-    .refresh-btn-card {
-      width: 90px;
-      background: rgba(30, 41, 59, 0.4);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      color: var(--text-muted);
-      backdrop-filter: blur(16px);
-      text-align: center;
-      user-select: none;
-    }
-    .refresh-btn-card:hover {
-      background: rgba(99, 102, 241, 0.1);
-      border-color: var(--primary);
-      color: var(--primary);
-      transform: translateY(-2px);
-    }
-    .refresh-btn-card:active { transform: translateY(0); }
-    .refresh-icon { font-size: 1.6rem; margin-bottom: 4px; line-height: 1; }
-    .refresh-text { font-size: 0.75rem; font-weight: 600; }
-
     /* 数据卡片样式 */
     .stat-card {
       background: var(--card-bg);
@@ -133,13 +106,6 @@ const HTML_PAGE = `
     @media (max-width: 768px) {
       .dashboard-row { flex-direction: column; }
       .stats-grid { grid-template-columns: repeat(3, 1fr); } 
-      .refresh-btn-card { 
-        width: 100%; 
-        height: 50px; 
-        flex-direction: row; 
-        gap: 10px;
-      }
-      .refresh-icon { margin-bottom: 0; font-size: 1.2rem; }
     }
     /* ------------------------ */
 

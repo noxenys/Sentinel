@@ -11,12 +11,11 @@ compatibility_date = "2026-01-01"
 # KV存储命名空间
 [[kv_namespaces]]
 binding = "SENTINEL_KV"
-id = "你的KV命名空间ID"
-preview_id = "你的预览KV命名空间ID"
+id = "YOUR_KV_NAMESPACE_ID"
+# preview_id = "YOUR_PREVIEW_KV_NAMESPACE_ID"
 
 # 可选：D1数据库（如果需要）
 # [[d1_databases]]
 # binding = "SENTINEL_DB"
 # database_name = "sentinel-db"
 # database_id = "你的D1数据库ID"
-

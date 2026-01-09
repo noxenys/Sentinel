@@ -28,44 +28,59 @@ Sentinel v3.7 In-place Edition is a modern website monitoring system built on Cl
 
 ## 🚀 Quick Deployment
 
-### One-click Deployment
+### 🚀 Quick Deployment
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/your-username/sentinel)
+#### One-click Deployment (Recommended)
 
-### Manual Deployment
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME)
 
-#### Step 1: Create Worker
+**One-click Deployment Process**:
+1. **Click the button above** → Log in to your Cloudflare account
+2. **Authorize GitHub/GitLab access** → System automatically creates a code repository
+3. **Automatic resource configuration** → Cloudflare automatically creates KV storage and binds to Worker
+4. **Set environment variables** → Configure password and notification settings in deployment interface
+5. **Complete deployment** → System automatically builds and deploys to global network
+
+> 💡 **Benefits**: Automatic configuration of all required resources, no manual setup, supports continuous integration deployment
+
+#### ⚙️ Manual Deployment
+
+**Step 1: Create Worker and KV Storage**
 1. Log in to [Cloudflare Dashboard](https://dash.cloudflare.com)
 2. Go to **Workers & Pages** → **Create Worker**
 3. Copy the `worker.js` code into the editor
+4. Create KV Namespace: **Workers** → **KV** → **Create Namespace**
+   - Name: `SENTINEL_KV`
+   - Description: Sentinel Monitoring Data Storage
 
-### Step 2: Configure KV Storage
-1. Create KV Namespace in Worker settings
-2. Namespace name: `SENTINEL_KV`
-3. Bind to Worker, variable name must be `SENTINEL_KV`
+**Step 2: Bind KV Storage to Worker**
+1. In Worker settings, go to **Settings** → **Variables**
+2. In **KV Namespace Bindings** section, click **Add binding**
+3. Configure binding:
+   - Variable name: `SENTINEL_KV` (must match exactly)
+   - KV namespace: Select the created `SENTINEL_KV`
 
-### Step 3: Set Environment Variables
+**Step 3: Set Environment Variables**
+In Worker's **Settings** → **Variables** → **Environment Variables**, add:
 
 | Variable | Description | Required | Default |
 |----------|-------------|----------|---------|
-| `PASSWORD` | Admin panel operation password | ✅ | `123456` |
-| `TELEGRAM_TOKEN` | Telegram Bot Token (get from @BotFather) | ❌ | - |
-| `CHAT_ID` | Telegram Chat ID for receiving notifications | ❌ | - |
+| `PASSWORD` | Admin panel password | ✅ | `123456` |
+| `TELEGRAM_TOKEN` | Telegram Bot Token | ❌ | - |
+| `CHAT_ID` | Telegram Chat ID | ❌ | - |
 | `DISCORD_WEBHOOK` | Discord Webhook URL | ❌ | - |
-| `GENERIC_WEBHOOK` | Generic Webhook URL (supports Lark, DingTalk, etc.) | ❌ | - |
+| `GENERIC_WEBHOOK` | Generic Webhook URL | ❌ | - |
 
-### Step 4: Configure Scheduled Tasks (Cron Triggers)
-To enable background monitoring and failure alerts, you must configure Cron Triggers. The Worker runs at this frequency even if the web page is closed.
-Choose a frequency based on your **monitor count** and **Cloudflare plan**:
-| Plan | Cron Expression | Description | Use Case |
-| :--- | :--- | :--- | :--- |
-| **🛡️ Recommended** | `*/10 * * * *` | **Every 10 mins** | **Most users**. Safe for 50+ monitors. |
-| **🚀 Turbo Mode** | `* * * * *` | **Every 1 min** | **< 20 monitors only**. Fastest response, higher usage. |
-| **🐢 Power Saver** | `*/30 * * * *` | **Every 30 mins** | For massive non-critical monitors. |
-> **⚠️ Traffic Warning (Cloudflare Free Tier)**
-> Free Tier limit: **100,000 requests/day**.
-> * **Formula**: `Monitor Count` × `1440` (if 1 min interval) = Daily Requests
-> * **Example**: **20 monitors** at **1 min interval** = `28,800` requests/day (Safe). If you have >60 monitors, decrease frequency to 10 mins to avoid hitting limits.
+**Step 4: Configure Scheduled Tasks (Cron Triggers)**
+1. In Worker settings, go to **Triggers** → **Cron Triggers**
+2. Add new Cron trigger:
+   - **Recommended**: `*/10 * * * *` (Every 10 minutes)
+   - **Advanced**: Adjust frequency based on monitor count
+
+**Step 5: Deploy and Test**
+1. Click **Save and Deploy**
+2. Visit your Worker URL to test functionality
+3. Use default password `123456` to log in
 
 ## 📖 Detailed Usage Guide
 
@@ -243,4 +258,5 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
-*Last Updated: January 2026*
+*Project Started: January 5, 2026*  
+*Last Updated: January 9, 2026*

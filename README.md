@@ -36,22 +36,57 @@
 
 ### 快速部署 / Quick Deployment
 
-#### 一键部署 / One-click Deployment
+#### 🚀 一键部署 (推荐) / One-click Deployment (Recommended)
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/noxenys/sentinel)
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME)
 
-#### 手动部署 / Manual Deployment
-1. **创建 Worker** 在 Cloudflare 控制台 / **Create Worker** in Cloudflare Dashboard
-2. **配置 KV 存储**，命名空间为 `SENTINEL_KV` / **Configure KV Storage** with namespace `SENTINEL_KV`
-3. **设置环境变量**:
-   - `PASSWORD`: 管理员密码 (默认: `123456`) / Admin password (default: `123456`)
-   - `TELEGRAM_TOKEN`: Telegram机器人令牌 (可选) / Telegram bot token (optional)
-   - `CHAT_ID`: Telegram聊天ID (可选) / Telegram chat ID (optional)
-   - `DISCORD_WEBHOOK`: Discord Webhook URL (可选) / Discord Webhook URL (optional)
-   - `GENERIC_WEBHOOK`: 通用Webhook URL (可选) / Generic Webhook URL (optional)
-4. **配置定时任务** / **Configure Cron Trigger**: 推荐 `*/10 * * * *` (每10分钟 / Every 10 mins)
-> ⚠️ 免费版请注意请求额度，详情见文档 / Note free tier limits, see docs for details.
-5. **绑定KV命名空间**: 在Worker设置中将 `SENTINEL_KV` 绑定到变量名 `SENTINEL_KV` / **Bind KV namespace**: Bind `SENTINEL_KV` to variable name `SENTINEL_KV` in Worker settings
+**一键部署流程**:
+1. **点击上方按钮** → 登录您的 Cloudflare 账户
+2. **授权 GitHub/GitLab 访问** → 系统会自动创建代码仓库
+3. **自动配置资源** → Cloudflare 会自动创建 KV 存储空间并绑定到 Worker
+4. **设置环境变量** → 在部署界面配置密码和通知设置
+5. **完成部署** → 系统自动构建并部署到全球网络
+
+> 💡 **优势**: 自动配置所有必需资源，无需手动操作，支持持续集成部署
+
+#### ⚙️ 手动部署 / Manual Deployment
+
+**步骤 1: 创建 Worker 和 KV 存储**
+1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com)
+2. 进入 **Workers & Pages** → **Create Worker**
+3. 将 `worker.js` 代码复制到编辑器中
+4. 创建 KV 命名空间: **Workers** → **KV** → **Create Namespace**
+   - 名称: `SENTINEL_KV`
+   - 描述: Sentinel Monitoring Data Storage
+
+**步骤 2: 绑定 KV 存储到 Worker**
+1. 在 Worker 设置中进入 **Settings** → **Variables**
+2. 在 **KV Namespace Bindings** 部分点击 **Add binding**
+3. 配置绑定:
+   - Variable name: `SENTINEL_KV` (必须精确匹配)
+   - KV namespace: 选择刚才创建的 `SENTINEL_KV`
+
+**步骤 3: 设置环境变量**
+在 Worker 的 **Settings** → **Variables** → **Environment Variables** 中添加:
+
+| 变量名 | 描述 | 必需 | 默认值 |
+|--------|------|------|--------|
+| `PASSWORD` | 管理面板密码 | ✅ | `123456` |
+| `TELEGRAM_TOKEN` | Telegram 机器人令牌 | ❌ | - |
+| `CHAT_ID` | Telegram 聊天ID | ❌ | - |
+| `DISCORD_WEBHOOK` | Discord Webhook URL | ❌ | - |
+| `GENERIC_WEBHOOK` | 通用 Webhook URL | ❌ | - |
+
+**步骤 4: 配置定时任务 (Cron Triggers)**
+1. 在 Worker 设置中进入 **Triggers** → **Cron Triggers**
+2. 添加新的 Cron 触发器:
+   - **推荐设置**: `*/10 * * * *` (每10分钟检查一次)
+   - **高级设置**: 根据监控数量调整频率
+
+**步骤 5: 部署和测试**
+1. 点击 **Save and Deploy**
+2. 访问您的 Worker URL 测试功能
+3. 使用默认密码 `123456` 登录
 
 ## 📖 文档 / Documentation
 
@@ -113,7 +148,9 @@ sentinel/
 **🚀 由 Noxen YS 维护**  
 **🚀 Maintained by Noxen YS**
 
-*最后更新: 2026年1月*  
-*Last Updated: January 2026*
+*项目开始: 2026年1月5日*  
+*项目最后更新: 2026年1月9日*  
+*Project Started: January 5, 2026*  
+*Last Updated: January 9, 2026*
 
 </div>
