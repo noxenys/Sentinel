@@ -812,6 +812,9 @@ const HTML_PAGE = `
         const avgLatency = latencyCount > 0 ? Math.round(totalLatency / latencyCount) : 0;
         const hasOffline = groupOffline > 0;
         
+        // 1. 定义折叠逻辑：如果没有异常(!hasOffline)，则默认为折叠状态 
+        const isCollapsed = !hasOffline;
+        
         let itemsHtml = '';
         items.forEach(item => {
           const history = historyData[item.raw] || [];
@@ -883,7 +886,7 @@ const HTML_PAGE = `
         });
         
         html += \`
-          <div class="group-container" id="group-\${groupId}\${hasOffline ? ' has-offline' : ''}">
+          <div class="group-container\${isCollapsed ? ' group-collapsed' : ''}\${hasOffline ? ' has-offline' : ''}" id="group-\${groupId}">
             <div class="group-header\${hasOffline ? ' has-offline' : ''}" onclick="toggleGroup('\${groupId}')">
               <div class="group-title" id="group-title-\${groupId}">
                 <svg class="group-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg>
@@ -1049,6 +1052,12 @@ const HTML_PAGE = `
           // 更新分类样式
           if (groupOffline > 0) {
             groupHeader.classList.add('has-offline');
+            
+            // [新增] 如果发现异常，强制展开分组
+            const groupContainer = document.getElementById('group-' + groupId);
+            if (groupContainer) {
+              groupContainer.classList.remove('group-collapsed');
+            }
           } else {
             groupHeader.classList.remove('has-offline');
           }
