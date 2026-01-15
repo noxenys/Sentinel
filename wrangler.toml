@@ -9,10 +9,11 @@ compatibility_date = "2026-01-01"
 # DISCORD_WEBHOOK = "your-discord-webhook-url"
 # GENERIC_WEBHOOK = "your-generic-webhook-url"
 
-# KV存储命名空间（部署时自动创建）
-[[kv_namespaces]]
-binding = "SENTINEL_KV"
-id = ""  # 部署时自动生成
+# KV存储命名空间
+# 注意：如果是首次部署，请在 Cloudflare Dashboard 中手动创建 KV 并绑定，或者填入创建后的 ID
+# [[kv_namespaces]]
+# binding = "SENTINEL_KV"
+# id = ""  # 请填入您的 KV ID，例如 "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 # Cron触发器配置
 [triggers]
