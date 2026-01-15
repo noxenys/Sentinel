@@ -20,13 +20,9 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         env:
           PASSWORD: ${{ secrets.PASSWORD }}
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          CHAT_ID: ${{ secrets.CHAT_ID }}
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           command: deploy
           secrets: |
             PASSWORD
-            TELEGRAM_TOKEN
-            CHAT_ID
