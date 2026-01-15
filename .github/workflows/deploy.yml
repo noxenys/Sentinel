@@ -10,7 +10,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: readb
+      contents: read
 
     steps:
       - name: Checkout repository
