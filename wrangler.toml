@@ -1,0 +1,23 @@
+name = "sentinel"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+# 环境变量配置
+actions[env.production.vars]
+# TELEGRAM_TOKEN = "your-telegram-bot-token"
+# CHAT_ID = "your-telegram-chat-id"
+# DISCORD_WEBHOOK = "your-discord-webhook-url"
+# GENERIC_WEBHOOK = "your-generic-webhook-url"
+
+# KV存储命名空间（部署时自动创建）
+[[kv_namespaces]]
+binding = "SENTINEL_KV"
+id = ""  # 部署时自动生成
+
+# Cron触发器配置
+[triggers]
+crons = ["*/10 * * * *"]
+
+# 兼容性标志
+[compatibility_flags]
+nodejs_compat = true
