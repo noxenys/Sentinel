@@ -3,7 +3,6 @@ main = "worker.js"
 compatibility_date = "2026-01-01"
 
 # 环境变量配置
-actions[env.production.vars]
 # TELEGRAM_TOKEN = "your-telegram-bot-token"
 # CHAT_ID = "your-telegram-chat-id"
 # DISCORD_WEBHOOK = "your-discord-webhook-url"
