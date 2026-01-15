@@ -2,7 +2,8 @@ name = "sentinel"
 main = "worker.js"
 compatibility_date = "2026-01-01"
 
-# 环境变量配置
+# 环境变量配置 / Environment Variables
+# 请在 Cloudflare Dashboard 中配置以下变量
 # TELEGRAM_TOKEN = "your-telegram-bot-token"
 # CHAT_ID = "your-telegram-chat-id"
 # DISCORD_WEBHOOK = "your-discord-webhook-url"
